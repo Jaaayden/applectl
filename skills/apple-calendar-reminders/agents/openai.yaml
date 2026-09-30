@@ -1,0 +1,4 @@
+interface:
+  display_name: "苹果日历与提醒事项"
+  short_description: "通过 applectl 管理苹果日历和提醒事项，无需截图或界面操作"
+  default_prompt: "使用 $apple-calendar-reminders 帮我读取或管理苹果日历与提醒事项。"

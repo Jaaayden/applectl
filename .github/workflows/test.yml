@@ -1,0 +1,13 @@
+name: Tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift tests (no Calendar or Reminders permissions needed)
+        run: swift test
+      - name: Launcher tests
+        run: python3 -m unittest discover -s Tests/Python

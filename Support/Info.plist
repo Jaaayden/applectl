@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleIdentifier</key><string>com.jayden.applectl</string>
+  <key>CFBundleName</key><string>AppleCtl</string>
+  <key>CFBundleDisplayName</key><string>AppleCtl</string>
+  <key>CFBundleExecutable</key><string>applectl-native</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundleVersion</key><string>0.1.0</string>
+  <key>LSMinimumSystemVersion</key><string>14.0</string>
+  <key>LSUIElement</key><true/>
+  <key>NSCalendarsFullAccessUsageDescription</key><string>AppleCtl reads and manages your Apple Calendar events when you request calendar operations.</string>
+  <key>NSCalendarsUsageDescription</key><string>AppleCtl reads and manages your Apple Calendar events.</string>
+  <key>NSRemindersFullAccessUsageDescription</key><string>AppleCtl reads and manages your Apple Reminders when you request reminder operations.</string>
+  <key>NSRemindersUsageDescription</key><string>AppleCtl reads and manages your Apple Reminders.</string>
+</dict></plist>
