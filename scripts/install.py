@@ -1,46 +1,76 @@
 #!/usr/bin/env python3
-"""Build and install this project without replacing unrelated commands or apps."""
+"""Install from a source checkout or a prebuilt release without replacing unrelated apps."""
 import os
 from pathlib import Path
 import shutil
-import subprocess
 import tempfile
 
-project = Path(__file__).resolve().parent.parent
-destination = Path.home() / "Library/Application Support/AppleCtl"
-app = destination / "AppleCtl.app"
-launcher = Path.home() / ".local/bin/applectl"
-marker = destination / ".managed-by-applectl"
-if destination.exists() and not marker.is_file():
-    raise SystemExit("An unmanaged AppleCtl installation exists; inspect it before replacing it.")
-if launcher.exists() and "Launch the signed local app" not in launcher.read_text(errors="replace"):
-    raise SystemExit("An unrelated applectl command exists; it was preserved.")
-build = Path(tempfile.gettempdir()) / "applectl-release-build"
-subprocess.run(["swift", "build", "-c", "release", "--scratch-path", str(build)], cwd=project, check=True)
-binary_dir = subprocess.check_output(["swift", "build", "-c", "release", "--scratch-path", str(build), "--show-bin-path"], cwd=project, text=True).strip()
-destination.mkdir(parents=True, exist_ok=True)
-with tempfile.TemporaryDirectory(prefix="applectl-install-", dir=destination) as staging:
-    candidate = Path(staging) / "AppleCtl.app"
-    (candidate / "Contents/MacOS").mkdir(parents=True)
-    shutil.copy2(project / "Support/Info.plist", candidate / "Contents/Info.plist")
-    shutil.copy2(Path(binary_dir) / "applectl-native", candidate / "Contents/MacOS/applectl-native")
-    subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", "--identifier", "com.jayden.applectl", str(candidate)], check=True)
-    subprocess.run(["/usr/bin/codesign", "--verify", "--strict", str(candidate)], check=True)
-    backup = destination / "AppleCtl.previous.app"
-    if backup.exists():
-        shutil.rmtree(backup)
-    if app.exists():
-        app.rename(backup)
+from bundle import build_bundle, project_version, sign_bundle, verify_bundle
+
+
+def install_targets(home):
+    destination = home / "Library/Application Support/AppleCtl"
+    launcher = home / ".local/bin/applectl"
+    marker = destination / ".managed-by-applectl"
+    if destination.is_symlink() or (destination.exists() and not marker.is_file()):
+        raise ValueError("An unmanaged AppleCtl installation exists; it was preserved")
+    if launcher.is_symlink() or (launcher.exists() and "Launch the signed local app" not in launcher.read_text(errors="replace")):
+        raise ValueError("An unrelated applectl command exists; it was preserved")
+    return destination, launcher, marker
+
+
+def main():
+    project = Path(__file__).resolve().parent.parent
+    version = project_version(project)
+    destination, launcher, marker = install_targets(Path.home())
+    created_destination = not destination.exists()
     try:
-        candidate.rename(app)
-    except Exception:
-        if backup.exists() and not app.exists():
-            backup.rename(app)
-        raise
-    marker.write_text("Managed by the Jaaayden/applectl installer.\n")
-launcher.parent.mkdir(parents=True, exist_ok=True)
-shutil.copy2(project / "scripts/applectl.py", launcher)
-os.chmod(launcher, 0o755)
-print(f"Installed command: {launcher}")
-print(f"Installed app: {app}")
-print("Run applectl auth grant --all and allow the two macOS permission prompts.")
+        destination.mkdir(parents=True, exist_ok=True)
+        launcher.parent.mkdir(parents=True, exist_ok=True)
+        app = destination / "AppleCtl.app"
+        prebuilt = project / "AppleCtl.app"
+        with tempfile.TemporaryDirectory(prefix="applectl-install-", dir=destination) as staging:
+            candidate = Path(staging) / "AppleCtl.app"
+            if prebuilt.is_dir():
+                verify_bundle(prebuilt, version)
+                shutil.copytree(prebuilt, candidate, symlinks=True)
+                sign_bundle(candidate)
+                verify_bundle(candidate, version)
+            else:
+                with tempfile.TemporaryDirectory(prefix="applectl-build-") as scratch:
+                    build_bundle(project, candidate, Path(scratch))
+            descriptor, candidate_launcher = tempfile.mkstemp(prefix=".applectl-install-", dir=launcher.parent)
+            os.close(descriptor)
+            candidate_launcher = Path(candidate_launcher)
+            shutil.copy2(project / "scripts/applectl.py", candidate_launcher)
+            candidate_launcher.chmod(0o755)
+            backup = destination / "AppleCtl.previous.app"
+            if backup.exists():
+                shutil.rmtree(backup)
+            if app.exists():
+                app.rename(backup)
+            try:
+                candidate.rename(app)
+                candidate_launcher.replace(launcher)
+                marker.write_text("Managed by the Jaaayden/applectl installer.\n")
+            except Exception:
+                if app.exists():
+                    shutil.rmtree(app)
+                if backup.exists():
+                    backup.rename(app)
+                raise
+            finally:
+                candidate_launcher.unlink(missing_ok=True)
+    finally:
+        if created_destination and not marker.is_file():
+            try:
+                destination.rmdir()
+            except OSError:
+                pass
+    print(f"Installed applectl {version}: {launcher}")
+    print(f"Installed app: {app}")
+    print("Run applectl auth grant --all and allow the two macOS permission prompts.")
+
+
+if __name__ == "__main__":
+    main()

@@ -2,6 +2,7 @@
 """Launch the signed local app so macOS grants AppleCtl its own TCC identity."""
 import json
 import os
+import plistlib
 from pathlib import Path
 import subprocess
 import sys
@@ -9,8 +10,13 @@ import tempfile
 
 
 def fail(code, message):
+    try:
+        info = Path.home() / "Library/Application Support/AppleCtl/AppleCtl.app/Contents/Info.plist"
+        version = plistlib.loads(info.read_bytes()).get("CFBundleShortVersionString", "unknown")
+    except (OSError, ValueError):
+        version = "unknown"
     print(json.dumps({"ok": False, "error": {"code": code, "message": message},
-                      "meta": {"version": "0.1.0", "command": " ".join(sys.argv[1:3]), "exitCode": 1}}, ensure_ascii=False))
+                      "meta": {"version": version, "command": " ".join(sys.argv[1:3]), "exitCode": 1}}, ensure_ascii=False))
     return 1
 
 

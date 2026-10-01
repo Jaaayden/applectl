@@ -15,7 +15,7 @@ struct AppleCtlMain {
         if resultFile == nil && (arguments.isEmpty || arguments == ["--help"] || arguments == ["-h"]) {
             print(Runner.help); return
         }
-        if resultFile == nil && arguments == ["--version"] { print("0.1.0"); return }
+        if resultFile == nil && arguments == ["--version"] { print(ToolVersion.current); return }
         let response = await Runner().run(arguments)
         do {
             let data = try response.encoded()

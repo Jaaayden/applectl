@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+<title id="title">AppleCtl</title>
+<desc id="desc">A coral calendar and green checkmark on a light rounded square.</desc>
+<defs>
+  <linearGradient id="base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#e8edf2"/></linearGradient>
+  <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#f8fafc"/></linearGradient>
+  <linearGradient id="coral" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff7465"/><stop offset="1" stop-color="#eb514e"/></linearGradient>
+  <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#36b47b"/><stop offset="1" stop-color="#178b61"/></linearGradient>
+  <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#e1e6ec"/><stop offset=".45" stop-color="#ffffff"/><stop offset="1" stop-color="#d4dce4"/></linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="175%"><feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#17263c" flood-opacity=".15"/></filter>
+  <filter id="badgeShadow" x="-35%" y="-35%" width="175%" height="180%"><feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#165d43" flood-opacity=".24"/></filter>
+</defs>
+<rect x="60" y="60" width="904" height="904" rx="202" fill="url(#base)"/>
+<rect x="62" y="62" width="900" height="900" rx="200" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity=".9"/>
+<g filter="url(#shadow)">
+  <rect x="202" y="215" width="620" height="574" rx="86" fill="url(#paper)"/>
+  <path d="M288 215h448a86 86 0 0 1 86 86v89H202v-89a86 86 0 0 1 86-86Z" fill="url(#coral)"/>
+  <path d="M202 390h620" stroke="#d64b46" stroke-opacity=".18" stroke-width="3"/>
+</g>
+<rect x="327" y="169" width="48" height="128" rx="24" fill="url(#ring)"/>
+<rect x="649" y="169" width="48" height="128" rx="24" fill="url(#ring)"/>
+<rect x="279" y="457" width="104" height="98" rx="23" fill="#ffe6e1"/>
+<rect x="282" y="460" width="98" height="92" rx="20" fill="none" stroke="#ffa595" stroke-width="3" stroke-opacity=".52"/>
+<rect x="459" y="457" width="104" height="98" rx="23" fill="#e8edf2"/>
+<rect x="639" y="457" width="104" height="98" rx="23" fill="#e8edf2"/>
+<rect x="279" y="615" width="104" height="98" rx="23" fill="#e8edf2"/>
+<rect x="459" y="615" width="104" height="98" rx="23" fill="#e8edf2"/>
+<circle cx="743" cy="722" r="149" fill="url(#green)" filter="url(#badgeShadow)"/>
+<circle cx="743" cy="722" r="146" fill="none" stroke="#6ccda3" stroke-opacity=".35" stroke-width="3"/>
+<path d="m672 723 49 49 93-103" fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

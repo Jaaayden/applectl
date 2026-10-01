@@ -1,4 +1,10 @@
-# applectl
+<p align="center"><img src="assets/icon.png" width="128" height="128" alt="AppleCtl icon"></p>
+
+# AppleCtl
+
+English · [简体中文](README.zh-CN.md) · [Download](https://github.com/Jaaayden/applectl/releases/latest)
+
+[![Tests](https://github.com/Jaaayden/applectl/actions/workflows/test.yml/badge.svg)](https://github.com/Jaaayden/applectl/actions/workflows/test.yml)
 
 One local command for Apple Calendar and Apple Reminders on macOS 14+.
 
@@ -8,7 +14,9 @@ This independent project adapts the reminder core from [openclaw/remindctl](http
 
 ## Install
 
-Requires macOS 14+, Python 3, and a Swift 6.0+ toolchain. There are no Swift package dependencies.
+Requires macOS 14+ and Python 3. Download the matching arm64 (Apple silicon) or x86_64 (Intel) archive from [Releases](https://github.com/Jaaayden/applectl/releases), extract it and run `python3 scripts/install.py` from the extracted directory. The archive includes the app, launcher, installer, Skill and licenses; prebuilt installation does not need Swift. Verify downloads against the included SHA256SUMS.
+
+For source installation, also provide a Swift 6.0+ toolchain. There are no Swift package dependencies.
 
 ```bash
 git clone https://github.com/Jaaayden/applectl.git
@@ -16,7 +24,9 @@ cd applectl
 python3 scripts/install.py
 ```
 
-The installer places the command at `~/.local/bin/applectl` and a locally signed app at `~/Library/Application Support/AppleCtl/AppleCtl.app`. Add `~/.local/bin` to your PATH if necessary, or use the full command path. Existing unrelated installations are preserved. Reinstallation retains the previous managed app as a backup.
+The installer places the command at `~/.local/bin/applectl` and a locally signed app at `~/Library/Application Support/AppleCtl/AppleCtl.app`. Add `~/.local/bin` to your PATH if necessary, or use the full command path. Prebuilt apps use ad-hoc local signatures and are not Developer ID signed or notarized. A downloaded app may need manual approval in macOS settings; the installer preserves quarantine attributes. Source builds remain available.
+
+Existing unrelated installations are preserved. Reinstallation retains the previous managed app as a backup.
 
 The launcher starts this background app through Launch Services, giving macOS a public, ordinary application identity for permission handling. It uses no private responsibility-disclaim API or AppleScript. Command results are returned through a private temporary directory that is removed after each invocation. There is no persistent process or network listener.
 
@@ -49,7 +59,7 @@ Dates without an offset use the requested `--timezone`, otherwise the Mac's time
 
 `--clear-alarm` clears absolute reminder alarms while preserving relative and location alarms. Completing a recurring reminder may cause macOS to create the next reminder; calendar occurrence scopes do not apply to reminders.
 
-Event query ranges are `[from,to)` and limited to 366 days per call; without dates, the next seven days are returned. All-day event end dates are exclusive: a one-day event on October 1 ends at October 2 midnight.
+Event query ranges are `[from,to)` and limited to 366 days per call; without dates, the next seven days are returned. Events intersecting the query interval are included. All-day event end dates are exclusive: a one-day event on October 1 ends at October 2 midnight.
 
 ### Recurring events
 
@@ -102,7 +112,15 @@ Unit tests cover dates/timezones, malformed arguments, recurrence anchors, occur
 
 EventKit does not expose native Reminders tags, smart lists, sections, image/file attachments or the private Urgent toggle. It also does not provide arbitrary calendar invitation management. Existing complex recurrence rules are preserved unless explicitly replaced, but creation accepts only daily/weekly/monthly/yearly intervals with a count or end date. Alarm creation supports relative calendar alarms and absolute reminder alarms. No private database access is used.
 
+On this Mac, EventKit accepted a 2099 recurring series but returned no occurrences; next-year recurrence operations were verified. Arbitrarily distant recurrence expansion is not guaranteed.
+
 Batch reminder operations preflight IDs and permissions and then commit deferred changes together. EventKit does not promise a distributed transaction across calendar providers; if commit fails, read back before retrying.
+
+## CI and releases
+
+CI runs Swift, launcher and packaging tests on both Apple silicon and Intel. Tags matching `VERSION` trigger tests, native builds, app signature/version verification and SHA256SUMS generation before a GitHub Release is published. Update `VERSION`, `Sources/AppleCore/ToolVersion.swift` and `RELEASE_NOTES.md` together before tagging a new release. See [.github/workflows/release.yml](.github/workflows/release.yml).
+
+Original icon source: [SVG](assets/icon.svg), [PNG](assets/icon.png) and macOS ICNS.
 
 ## License
 

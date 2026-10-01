@@ -6,7 +6,7 @@ import RemindCore
 public struct Runner {
     public init() {}
     public static let help = """
-    applectl 0.1.0 — Apple Calendar and Reminders
+    applectl \(ToolVersion.current) — Apple Calendar and Reminders
 
     All operations return JSON. Dates use local time unless --timezone is provided.
 

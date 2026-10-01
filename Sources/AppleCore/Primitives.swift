@@ -131,12 +131,12 @@ public struct Response: Codable, Sendable {
         public let exitCode: Int32
     }
     public static func success(_ data: JSONValue, command: String) -> Response {
-        Response(ok: true, data: data, error: nil, meta: Metadata(version: "0.1.0", command: command, exitCode: 0))
+        Response(ok: true, data: data, error: nil, meta: Metadata(version: ToolVersion.current, command: command, exitCode: 0))
     }
     public static func failure(_ error: Error, command: String) -> Response {
         let code = (error as? ToolError)?.code ?? "operation_failed"
         return Response(ok: false, data: nil, error: ["code": code, "message": error.localizedDescription],
-                        meta: Metadata(version: "0.1.0", command: command, exitCode: 1))
+                        meta: Metadata(version: ToolVersion.current, command: command, exitCode: 1))
     }
     public func encoded() throws -> Data {
         let encoder = JSONEncoder()
