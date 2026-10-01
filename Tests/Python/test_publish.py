@@ -34,20 +34,25 @@ class PublishTests(unittest.TestCase):
         published = dict(self.draft, draft=False, html_url="https://github.com/owner/repo/releases/tag/v0.1.0")
         with patch.object(publish_release, "api", side_effect=[[[self.draft]], self.draft, published]) as api, patch.object(publish_release, "gh") as gh:
             self.publish()
-        self.assertEqual(gh.call_args.args[:3], ("release", "upload", "v0.1.0"))
+        gh.assert_not_called()  # Existing matching assets need no replacement.
         self.assertEqual(api.call_args.args, ("repos/owner/repo/releases/42",))
         self.assertEqual(api.call_args.kwargs["body"], {"draft": False, "make_latest": "true"})
         self.assertTrue(all("/releases/tags/" not in call.args[0] for call in api.call_args_list))
 
     def test_new_release_stays_draft_until_assets_are_verified(self):
         published = dict(self.draft, draft=False, html_url="https://github.com/owner/repo/releases/tag/v0.1.0")
-        with patch.object(publish_release, "api", side_effect=[[[]], [[self.draft]], self.draft, published]) as api, patch.object(publish_release, "gh") as gh:
+        empty_draft = dict(self.draft, assets=[])
+        reference = {"ref": "refs/tags/v0.1.0"}
+        with patch.object(publish_release, "api", side_effect=[[[]], reference, empty_draft, self.draft, published]) as api, patch.object(publish_release, "gh") as gh:
             self.publish()
-        self.assertEqual(gh.call_args_list[0].args[:3], ("release", "create", "v0.1.0"))
-        self.assertIn("--verify-tag", gh.call_args_list[0].args)
-        self.assertIn("--draft", gh.call_args_list[0].args)
-        self.assertEqual(gh.call_args_list[1].args[:3], ("release", "upload", "v0.1.0"))
+        self.assertEqual(api.call_args_list[1].args, ("repos/owner/repo/git/ref/tags/v0.1.0",))
+        self.assertEqual(api.call_args_list[2].kwargs["method"], "POST")
+        self.assertTrue(api.call_args_list[2].kwargs["body"]["draft"])
+        self.assertEqual(gh.call_count, 3)
+        for call in gh.call_args_list:
+            self.assertTrue(call.args[1].startswith("https://uploads.github.com/repos/owner/repo/releases/42/assets?name="))
         self.assertEqual(api.call_args.args, ("repos/owner/repo/releases/42",))
+        self.assertEqual(sum("--paginate" in call.args for call in api.call_args_list), 1)
 
     def test_published_release_is_never_modified(self):
         release = dict(self.draft, draft=False)

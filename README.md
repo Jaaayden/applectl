@@ -108,6 +108,8 @@ python3 scripts/live_verify.py --acknowledge-temporary-data
 
 Unit tests cover dates/timezones, malformed arguments, recurrence anchors, occurrence identity, overdue filtering, preservation of reminder alarms, and private result transport/error handling. Live verification creates dedicated, clearly named temporary containers, exercises real calendar/reminder operations, and cleans them up. It requires both system permissions and explicit acknowledgement of temporary writes. It prints no personal event or reminder content. GitHub CI runs only tests that do not access user data.
 
+For authorization, launch or EventKit changes, complete local automated tests, a release build and installation, first-authorization checks and live verification in temporary containers before pushing and releasing. Tests with existing permissions do not replace first-authorization checks.
+
 ## Limits
 
 EventKit does not expose native Reminders tags, smart lists, sections, image/file attachments or the private Urgent toggle. It also does not provide arbitrary calendar invitation management. Existing complex recurrence rules are preserved unless explicitly replaced, but creation accepts only daily/weekly/monthly/yearly intervals with a count or end date. Alarm creation supports relative calendar alarms and absolute reminder alarms. No private database access is used.

@@ -14,10 +14,10 @@ def gh(*arguments, input=None):
     ).stdout
 
 
-def api(endpoint, *arguments, body=None):
+def api(endpoint, *arguments, body=None, method="PATCH"):
     if body is None:
         return json.loads(gh("api", endpoint, *arguments))
-    return json.loads(gh("api", endpoint, "--method", "PATCH", "--input", "-", input=json.dumps(body)))
+    return json.loads(gh("api", endpoint, "--method", method, "--input", "-", input=json.dumps(body)))
 
 
 def local_assets(tag, directory):
@@ -60,15 +60,26 @@ def publish(repo, tag, directory, notes):
     assets = local_assets(tag, directory)
     release = find_release(repo, tag)
     if release is None:
-        gh("release", "create", tag, "--repo", repo, "--verify-tag", "--draft",
-           "--title", "AppleCtl " + tag, "--notes-file", str(notes))
-        release = find_release(repo, tag)
-        if release is None:
-            raise ValueError("New draft could not be found; no publication attempted")
+        reference = api(f"repos/{repo}/git/ref/tags/{tag}")
+        if reference.get("ref") != "refs/tags/" + tag:
+            raise ValueError("Release tag was not verified")
+        release = api(f"repos/{repo}/releases", method="POST", body={
+            "tag_name": tag, "name": "AppleCtl " + tag,
+            "body": notes.read_text(), "draft": True, "prerelease": False,
+        })
+        if release.get("tag_name") != tag:
+            raise ValueError("Created draft tag differs; no upload attempted")
     require_draft(release, assets)
     release_id = release["id"]
-    gh("release", "upload", tag, *(str(asset["path"]) for asset in assets.values()),
-       "--repo", repo, "--clobber")
+    existing = {asset["name"]: asset for asset in release.get("assets", [])}
+    for name, asset in assets.items():
+        previous = existing.get(name)
+        if previous is not None:
+            if previous.get("state") == "uploaded" and previous.get("size") == asset["size"] and previous.get("digest") == asset["digest"]:
+                continue
+            gh("api", f"repos/{repo}/releases/assets/{previous['id']}", "--method", "DELETE")
+        gh("api", f"https://uploads.github.com/repos/{repo}/releases/{release_id}/assets?name={name}",
+           "--method", "POST", "--header", "Content-Type: application/octet-stream", "--input", str(asset["path"]))
     verified = api(f"repos/{repo}/releases/{release_id}")
     require_draft(verified, assets)
     remote_assets = verified.get("assets", [])
