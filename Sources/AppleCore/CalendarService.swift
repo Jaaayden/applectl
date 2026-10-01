@@ -2,6 +2,7 @@
 // Their MIT notices are retained under licenses/.
 @preconcurrency import EventKit
 import Foundation
+import RemindCore
 
 public struct CalendarRecord: Codable, Sendable {
     public let id: String
@@ -78,11 +79,8 @@ public final class CalendarService {
 
     public func authorize() async throws -> String {
         if Self.authorization == "not-determined" {
-            let granted = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Bool, Error>) in
-                store.requestFullAccessToEvents { granted, error in
-                    if let error { continuation.resume(throwing: error) }
-                    else { continuation.resume(returning: granted) }
-                }
+            let granted = try await AuthorizationRequest.perform { completion in
+                store.requestFullAccessToEvents(completion: completion)
             }
             if !granted { throw ToolError("permission_denied", "Allow AppleCtl in System Settings > Privacy & Security > Calendars.") }
         }

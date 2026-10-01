@@ -243,14 +243,8 @@ public actor RemindersStore {
 
 extension RemindersStore {
   private func requestFullAccess() async throws -> Bool {
-    try await withCheckedThrowingContinuation { continuation in
-      eventStore.requestFullAccessToReminders { granted, error in
-        if let error {
-          continuation.resume(throwing: error)
-          return
-        }
-        continuation.resume(returning: granted)
-      }
+    try await AuthorizationRequest.perform { completion in
+      eventStore.requestFullAccessToReminders(completion: completion)
     }
   }
 
