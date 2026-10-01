@@ -112,7 +112,7 @@ python3 scripts/live_verify.py --acknowledge-temporary-data
 
 真实测试需要两项系统权限，只在独立临时日历和提醒清单中操作，结束后清理；不输出个人记录。清理失败时保留本机恢复元数据。
 
-CI 在 Apple 芯片和 Intel 上检查版本、Swift 测试、启动器与打包边界。推送与 VERSION 一致的 `vX.Y.Z` 标签后，发布工作流先运行测试，再构建两种架构、验证签名和版本、生成 SHA256SUMS，最后发布 GitHub Release。维护者发新版时同时更新 `VERSION`、`Sources/AppleCore/ToolVersion.swift` 和 `RELEASE_NOTES.md`。
+CI 在 Apple 芯片和 Intel 上检查版本、Swift 测试、启动器与打包边界。推送与 VERSION 一致的 `vX.Y.Z` 标签后，发布工作流先运行测试，再构建两种架构、验证签名和版本、生成 SHA256SUMS，最后发布 GitHub Release。维护者发新版时同时更新 `VERSION`、`Sources/AppleCore/ToolVersion.swift` 和 `RELEASE_NOTES.md`。 发布中断时可在 Actions 的 Release 工作流选择 Run workflow，填入已有标签；测试和构建仍使用该标签，发布步骤按 Release ID 恢复草稿，核对远端摘要后公开，拒绝覆盖已公开版本。
 
 ## 能力边界与来源
 

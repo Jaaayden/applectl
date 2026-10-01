@@ -4,6 +4,11 @@ on:
     branches: [main]
   pull_request:
   workflow_call:
+    inputs:
+      ref:
+        description: Git ref to verify
+        required: false
+        type: string
 permissions:
   contents: read
 jobs:
@@ -15,9 +20,11 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - name: Verify release version
         run: python3 scripts/package_release.py --check-version
       - name: Swift tests (no Calendar or Reminders permissions needed)
         run: swift test
-      - name: Launcher and packaging tests
+      - name: Launcher, packaging and release tests
         run: python3 -m unittest discover -s Tests/Python

@@ -118,7 +118,7 @@ Batch reminder operations preflight IDs and permissions and then commit deferred
 
 ## CI and releases
 
-CI runs Swift, launcher and packaging tests on both Apple silicon and Intel. Tags matching `VERSION` trigger tests, native builds, app signature/version verification and SHA256SUMS generation before a GitHub Release is published. Update `VERSION`, `Sources/AppleCore/ToolVersion.swift` and `RELEASE_NOTES.md` together before tagging a new release. See [.github/workflows/release.yml](.github/workflows/release.yml).
+CI runs Swift, launcher and packaging tests on both Apple silicon and Intel. Tags matching `VERSION` trigger tests, native builds, app signature/version verification and SHA256SUMS generation before a GitHub Release is published. Update `VERSION`, `Sources/AppleCore/ToolVersion.swift` and `RELEASE_NOTES.md` together before tagging a new release. See [.github/workflows/release.yml](.github/workflows/release.yml). To recover an interrupted draft, manually run the Release workflow with the existing tag. Tests and builds use that tag; publication resumes the draft by release ID, verifies remote asset digests and refuses to overwrite a published release.
 
 Original icon source: [SVG](assets/icon.svg), [PNG](assets/icon.png) and macOS ICNS.
 
