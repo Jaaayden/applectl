@@ -190,7 +190,7 @@ public final class CalendarService {
         event.calendar = calendar
         event.title = title
         try apply(changes, to: event)
-        if !dryRun { try store.save(event, span: .thisEvent, commit: true) }
+        if !dryRun { try store.save(event, span: .thisEvent, commit: true); _ = event.refresh() }
         return record(event, identifier: dryRun ? "pending" : nil)
     }
 
@@ -206,7 +206,7 @@ public final class CalendarService {
         try writable(event.calendar)
         try verifyRevision(revision, event: event)
         try apply(changes, to: event)
-        if !dryRun { try store.save(event, span: scope == .this ? .thisEvent : .futureEvents, commit: true) }
+        if !dryRun { try store.save(event, span: scope == .this ? .thisEvent : .futureEvents, commit: true); _ = event.refresh() }
         return record(event)
     }
 
@@ -236,17 +236,28 @@ public final class CalendarService {
     }
 
     private func apply(_ changes: EventChanges, to event: EKEvent) throws {
-        let start = changes.start ?? event.startDate
-        let end = changes.end ?? event.endDate
-        guard let start, let end else { throw ToolError("invalid_range", "An event requires start and end.") }
+        guard var start = changes.start ?? event.startDate, var end = changes.end ?? event.endDate else {
+            throw ToolError("invalid_range", "An event requires start and end.")
+        }
+        let allDay = changes.allDay ?? event.isAllDay
+        if allDay {
+            // Convert before validating so the range check sees the dates that will be stored.
+            let zone = changes.timezone ?? event.timeZone ?? .current
+            start = Calendar.current.startOfDay(for: Dates.floating(start, from: zone))
+            end = Dates.floating(end, from: zone)
+            // A date-only end means "the day after the last day" (exclusive); EventKit stores the last
+            // day's final second. Existing ends such as 23:59:59 are already in that form.
+            if changes.end != nil, end == Calendar.current.startOfDay(for: end) { end = end.addingTimeInterval(-1) }
+        }
         try Dates.validateRange(start: start, end: end)
         if let title = changes.title {
             guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw ToolError("invalid_arguments", "Title cannot be empty.") }
             event.title = title
         }
+        // Set flag and zone first so EventKit does not re-interpret the dates we assign next.
+        if let flag = changes.allDay { event.isAllDay = flag }
+        if allDay { event.timeZone = nil } else if let timezone = changes.timezone { event.timeZone = timezone }
         event.startDate = start; event.endDate = end
-        if let timezone = changes.timezone { event.timeZone = timezone }
-        if let allDay = changes.allDay { event.isAllDay = allDay }
         if changes.clearNotes { event.notes = nil } else if let notes = changes.notes { event.notes = notes }
         if changes.clearLocation { event.location = nil } else if let location = changes.location { event.location = location }
         if changes.clearURL { event.url = nil } else if let url = changes.url { event.url = url }
