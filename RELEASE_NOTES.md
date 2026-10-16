@@ -1,10 +1,11 @@
-修复首次系统授权可能导致应用崩溃的问题，建议使用本版本替代 v0.1.0。
+修复全天事件在 Mac 时区与 `--timezone` 不一致时可能差一天的问题，并让编辑命令的检查与帮助更可靠。
 
-- 日历与提醒事项统一使用明确可跨线程的授权结果回调，避免 Swift 6 把系统后台回调当成调用者的 actor。
-- 新增主 actor、其他 actor、拒绝和错误四项授权回归测试；自动检查共 50 项。
-- 保留原创图标、英文与中文 README、统一 CLI、Agent Skill、重复日程范围和写入预览。
-- 发布流程支持按 Release ID 恢复草稿，核对远端文件大小与 SHA256 后公开；已公开版本不覆盖。
-- 提供 Apple 芯片与 Intel 原生安装包，以及 SHA256SUMS。
+- 全天事件现在是不带时区的日期：无论 Mac 在哪个时区、传什么 `--timezone`，都按请求的日历日存储。日期型 `--end` 仍表示最后一天的次日（开区间），返回的 `end` 为最后一天的 23:59:59。
+- 创建和编辑事件后重新读取再返回，响应与之后的 `events get` / `events list` 一致。
+- `events edit` / `reminders edit` 通过解析后的结构判断是否提供了更新字段，不再维护手写的选项名列表。
+- `applectl <group> --help` 以 JSON 返回该命令组的用法。
+- `--expected-revision` 用于没有修改时间的事件时，返回 `revision_unavailable`，不再误报冲突。
+- 内部：`Runner` 拆分为 Runner / RunnerEvents / RunnerReminders，行为不变；新增相关测试和全天事件结束日期的真实读写检查。
 
 安装：下载与你的运行架构对应的 tar.gz，解压后进入文件夹，执行 `python3 scripts/install.py`，再用 `applectl auth grant --all` 授予日历和提醒事项权限。需要 macOS 14+ 和 Python 3。
 
