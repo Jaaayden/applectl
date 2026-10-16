@@ -21,6 +21,7 @@ public enum Dates {
     }
 
     public static func parse(_ value: String, calendar: Calendar) throws -> ParsedUserDate {
+        // Deliberately stricter than DateParsing: agents get one predictable set of spellings.
         let canonical = value.range(of: #"\A(?:\d{4}-\d{2}-\d{2}(?:[ T].+)?|today|tomorrow|yesterday|now)\z"#,
                                     options: .regularExpression) != nil
         guard canonical, let parsed = DateParsing.parseUserDateWithMetadata(value, calendar: calendar) else {

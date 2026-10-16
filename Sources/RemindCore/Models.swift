@@ -228,4 +228,14 @@ public struct ReminderUpdate: Sendable {
     self.listTarget = listTarget
     self.isCompleted = isCompleted
   }
+
+  /// True when no field would change; callers reject such edits instead of silently saving nothing.
+  public var isEmpty: Bool {
+    if case .some = url { return false }
+    if case .some = dueDate { return false }
+    if case .some = alarmDate { return false }
+    if case .some = recurrenceRule { return false }
+    return title == nil && notes == nil && priority == nil && listName == nil
+      && listTarget == nil && isCompleted == nil
+  }
 }

@@ -60,6 +60,13 @@ public struct EventChanges {
     public var alarmMinutes: Int?
     public var clearAlarms = false
     public init() {}
+
+    /// True when no field would change; callers reject such edits instead of silently saving nothing.
+    public var isEmpty: Bool {
+        title == nil && start == nil && end == nil && timezone == nil && allDay == nil && notes == nil
+            && location == nil && url == nil && recurrence == nil && alarmMinutes == nil
+            && !clearNotes && !clearLocation && !clearURL && !clearRecurrence && !clearAlarms
+    }
 }
 
 @MainActor
@@ -221,7 +228,11 @@ public final class CalendarService {
     }
 
     private func verifyRevision(_ expected: String?, event: EKEvent) throws {
-        if let expected, expected != record(event).revision { throw ToolError("conflict", "Event changed since it was read. Read it again before editing.") }
+        guard let expected else { return }
+        guard let actual = record(event).revision else {
+            throw ToolError("revision_unavailable", "This event has no modification date, so --expected-revision cannot be checked. Omit it and read the event back after editing.")
+        }
+        if expected != actual { throw ToolError("conflict", "Event changed since it was read. Read it again before editing.") }
     }
 
     private func apply(_ changes: EventChanges, to event: EKEvent) throws {
