@@ -30,6 +30,16 @@ public enum Dates {
         return parsed
     }
 
+    /// All-day events are floating calendar dates that EventKit reads in the Mac's own time zone.
+    /// Re-express the wall-clock fields of `date` as seen in `zone` inside `target`, so the stored
+    /// day is the one the caller asked for no matter which zone the Mac is in.
+    public static func floating(_ date: Date, from zone: TimeZone, into target: TimeZone = .current) -> Date {
+        var source = Calendar(identifier: .gregorian); source.timeZone = zone
+        var destination = Calendar(identifier: .gregorian); destination.timeZone = target
+        let fields = source.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        return destination.date(from: fields) ?? date
+    }
+
     public static func iso(_ date: Date, timezone: TimeZone = .current) -> String {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

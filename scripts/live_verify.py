@@ -123,6 +123,8 @@ def main():
         allday = call("events", "add", "--calendar", calendar_id, "--title", marker + " all day",
                       "--start", f"{year}-11-01", "--end", f"{year}-11-02", "--all-day", "--timezone", "America/New_York")
         check("all-day date in negative timezone", allday["allDay"] and allday["start"].startswith(f"{year}-11-01"))
+        check("all-day end is the last day and matches a fresh read", allday["end"].startswith(f"{year}-11-01") and
+              call("events", "get", "--id", allday["id"])["start"] == allday["start"])
         call("events", "delete", "--id", allday["id"], "--force")
 
         reminder = call("reminders", "add", "--list-id", list_id, "--title", marker + " reminder", "--due", f"{year}-10-01 09:00",
