@@ -20,12 +20,25 @@ def fail(code, message):
     return 1
 
 
+def timeout_seconds(arguments):
+    """Default 120 s (600 s for the interactive permission prompt); APPLECTL_TIMEOUT_SECONDS overrides it."""
+    configured = os.environ.get("APPLECTL_TIMEOUT_SECONDS")
+    if configured is None:
+        return 600 if arguments[:2] == ["auth", "grant"] else 120
+    if not configured.isdigit() or not 1 <= int(configured) <= 3600:
+        return None
+    return int(configured)
+
+
 def main():
     app = Path.home() / "Library/Application Support/AppleCtl/AppleCtl.app"
     executable = app / "Contents/MacOS/applectl-native"
     if not executable.is_file():
         return fail("not_installed", "AppleCtl is not installed. Run scripts/install.py in the project.")
     arguments = sys.argv[1:]
+    timeout = timeout_seconds(arguments)
+    if timeout is None:
+        return fail("invalid_arguments", "APPLECTL_TIMEOUT_SECONDS must be an integer from 1 to 3600.")
     if "--result-file" in arguments:
         return fail("invalid_arguments", "--result-file is reserved for the launcher.")
     if not arguments or arguments in (["--help"], ["-h"], ["--version"]):
@@ -38,7 +51,7 @@ def main():
             result = subprocess.run(
                 ["/usr/bin/open", "-n", "-W", str(app), "--args", "--result-file", str(result_file), *arguments],
                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
-                timeout=600 if arguments[:2] == ["auth", "grant"] else 120,
+                timeout=timeout,
             )
         except subprocess.TimeoutExpired:
             return fail("result_unconfirmed", "Command timed out. Read back the target before retrying a mutation.")

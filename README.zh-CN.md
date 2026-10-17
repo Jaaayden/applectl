@@ -61,7 +61,7 @@ applectl reminders edit --id REMINDER_ID --due '2026-10-02 09:00' --alarm '2026-
 applectl reminders complete --id REMINDER_ID
 ```
 
-以上新增示例使用 `--dry-run` 预览；需要实际保存时去掉它。未指定日历或清单时使用系统默认目标；名称重复时使用完整 ID。所有操作返回 `ok`、`data` 或 `error`、`meta`；`meta.exitCode` 与退出码一致。失败和超时不能视为已经保存；超时后先回读，再决定是否重试。
+以上新增示例使用 `--dry-run` 预览；需要实际保存时去掉它。未指定日历或清单时使用系统默认目标；名称重复时使用完整 ID。所有操作返回 `ok`、`data` 或 `error`、`meta`；`meta.exitCode` 与退出码一致。失败和超时不能视为已经保存；超时后先回读，再决定是否重试。`applectl events --help`（或任一命令组）只显示该组用法，选项可写成 `--key value` 或 `--key=value`；失败时 `error.hint` 会给出已知的下一步。默认等待 120 秒（`auth grant` 为 600 秒），可用环境变量 `APPLECTL_TIMEOUT_SECONDS`（1–3600）调整。
 
 日期与时间：
 

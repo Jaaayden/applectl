@@ -83,7 +83,7 @@ applectl calendars create --name 'Example calendar'
 applectl lists create --name 'Example list'
 ```
 
-`applectl --help` lists commands and options. A timeout reports an unconfirmed result: read the target back before retrying a mutation.
+`applectl --help` lists commands and options; `applectl events --help` (or any group) shows just that group, and options may be written `--key value` or `--key=value`. Failures include an `error.hint` with the next step when one is known. A timeout (120 s by default, 600 s for `auth grant`; override with `APPLECTL_TIMEOUT_SECONDS`, 1–3600) reports an unconfirmed result: read the target back before retrying a mutation.
 
 ## Agent skill
 
