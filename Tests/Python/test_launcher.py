@@ -72,6 +72,31 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(result["error"]["code"], "launch_failed")
 
+    def test_timeout_defaults_and_environment_override(self):
+        seen = []
+
+        def capture(argv, **options):
+            seen.append(options["timeout"])
+            return self.result({"ok": True, "data": {}, "meta": {"exitCode": 0}})(argv, **options)
+
+        with patch.dict(launcher.os.environ, {}, clear=False):
+            launcher.os.environ.pop("APPLECTL_TIMEOUT_SECONDS", None)
+            self.invoke(["events", "list"], capture)
+            self.invoke(["auth", "grant", "--all"], capture)
+            with patch.dict(launcher.os.environ, {"APPLECTL_TIMEOUT_SECONDS": "300"}):
+                self.invoke(["events", "list"], capture)
+        self.assertEqual(seen, [120, 600, 300])
+
+    def test_invalid_timeout_is_rejected_before_launching(self):
+        output = io.StringIO()
+        with patch.object(launcher.Path, "home", return_value=self.home), patch.object(launcher.sys, "argv", ["applectl", "events", "list"]), \
+             patch.dict(launcher.os.environ, {"APPLECTL_TIMEOUT_SECONDS": "soon"}), \
+             patch.object(launcher.subprocess, "run") as run, contextlib.redirect_stdout(output):
+            code = launcher.main()
+        self.assertEqual(code, 1)
+        run.assert_not_called()
+        self.assertEqual(json.loads(output.getvalue())["error"]["code"], "invalid_arguments")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -67,11 +67,22 @@ public struct Options {
         while index < args.count {
             let token = args[index]
             guard token.hasPrefix("--") else { throw ToolError("invalid_arguments", "Unexpected argument: \(token)") }
-            let name = String(token.dropFirst(2))
-            guard self.values[name] == nil, !self.flags.contains(name) else {
-                throw ToolError("invalid_arguments", "Duplicate option: \(token)")
+            var name = String(token.dropFirst(2))
+            var inline: String?
+            if let equals = name.firstIndex(of: "=") {
+                inline = String(name[name.index(after: equals)...])
+                name = String(name[..<equals])
             }
-            if flagNames.contains(name) { self.flags.insert(name); index += 1; continue }
+            guard self.values[name] == nil, !self.flags.contains(name) else {
+                throw ToolError("invalid_arguments", "Duplicate option: --\(name)")
+            }
+            if flagNames.contains(name) {
+                guard inline == nil else { throw ToolError("invalid_arguments", "--\(name) does not take a value.") }
+                self.flags.insert(name); index += 1; continue
+            }
+            if let inline, valueNames.contains(name) {
+                self.values[name] = inline; index += 1; continue
+            }
             guard valueNames.contains(name), index + 1 < args.count, !args[index + 1].hasPrefix("--") else {
                 throw ToolError("invalid_arguments", "Unknown option or missing value: \(token)")
             }
@@ -146,13 +157,31 @@ public struct Response: Codable, Sendable {
     }
     public static func failure(_ error: Error, command: String) -> Response {
         let code = (error as? ToolError)?.code ?? "operation_failed"
-        return Response(ok: false, data: nil, error: ["code": code, "message": error.localizedDescription],
+        var details = ["code": code, "message": error.localizedDescription]
+        if let hint = ErrorHints.hint(for: code) { details["hint"] = hint }
+        return Response(ok: false, data: nil, error: details,
                         meta: Metadata(version: ToolVersion.current, command: command, exitCode: 1))
     }
     public func encoded() throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         return try encoder.encode(self)
+    }
+}
+
+/// A next step an agent can act on, keyed by error code; keeps ToolError call sites unchanged.
+public enum ErrorHints {
+    public static func hint(for code: String) -> String? {
+        switch code {
+        case "permission_denied": return "Run applectl auth grant --all and allow the macOS prompts, or enable AppleCtl in System Settings > Privacy & Security."
+        case "confirmation_required": return "Add --force to confirm the deletion, or --dry-run to preview it first."
+        case "occurrence_required", "occurrence_not_found": return "Run events list for the date range and pass the occurrenceStart of the target occurrence."
+        case "series_required": return "Use the ID of the original series, not a detached occurrence."
+        case "conflict": return "Run events get again, review the current event, then retry with its revision."
+        case "ambiguous_calendar": return "Run calendars list and pass the calendar's full ID."
+        case "invalid_date": return "Use YYYY-MM-DD, 'YYYY-MM-DD HH:MM', ISO 8601 with an offset, or today/tomorrow/yesterday/now."
+        default: return nil
+        }
     }
 }
 

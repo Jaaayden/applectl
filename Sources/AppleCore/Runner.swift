@@ -46,16 +46,23 @@ public struct Runner {
         catch { return .failure(error, command: command) }
     }
 
+    /// Usage lines for one command group, or the whole help text when the group is unknown.
+    private static func usage(for group: String?) -> String {
+        let lines = help.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let matching = group.map { name in lines.filter { $0.hasPrefix("applectl \(name) ") } } ?? []
+        return matching.isEmpty ? help : matching.joined(separator: "\n")
+    }
+
     /// `applectl <group> --help` returns just that group's usage lines, as JSON like every other result.
     private func helpData(_ arguments: [String]) -> JSONValue {
-        let group = arguments.first.flatMap { $0.hasPrefix("-") ? nil : $0 }
-        let lines = Self.help.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        let usage = group.map { name in lines.filter { $0.hasPrefix("applectl \(name) ") } } ?? []
-        return .object(["help": .string(usage.isEmpty ? Self.help : usage.joined(separator: "\n"))])
+        .object(["help": .string(Self.usage(for: arguments.first.flatMap { $0.hasPrefix("-") ? nil : $0 }))])
     }
 
     private func execute(_ arguments: [String]) async throws -> JSONValue {
         if arguments.contains("--help") || arguments.contains("-h") { return helpData(arguments) }
+        if arguments.count == 1, ["auth", "calendars", "events", "lists", "reminders"].contains(arguments[0]) {
+            throw ToolError("invalid_arguments", "Provide a command for \(arguments[0]). Usage:\n" + Self.usage(for: arguments[0]))
+        }
         guard arguments.count >= 2 else { throw ToolError("invalid_arguments", "Provide a group and command. Use --help.") }
         let group = arguments[0], action = arguments[1], rest = Array(arguments.dropFirst(2))
         switch group {

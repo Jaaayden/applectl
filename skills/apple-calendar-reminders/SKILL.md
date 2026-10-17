@@ -28,8 +28,9 @@ applectl events add --calendar CALENDAR_ID --title '报告' \
 - 默认日历来自系统；用户指定名称时先读取日历列表，名称重复使用完整 ID。只读日历不能写入。
 - 使用明确的日期和时区。未给结束时间且无法从活动资料确定时询问，不擅自编造时长。时间区间为 `[from,to)`，每次最多 366 天；查询当天需把 `to` 设为次日。
 - 全天事件显式使用 `--all-day` 和日期值，结束日期是活动最后一天的次日。保留用户只提供日期的含义。全天事件是不带时区的日期：无论 Mac 当前在哪个时区、传什么 `--timezone`，都按请求的日历日存储；返回的 `end` 是最后一天的 23:59:59。
-- 重复事件的每次发生都在结果中。先刷新相应时间区间，用返回的 `id` 与 `occurrenceStart` 一起定位。编辑/删除默认 `--scope this`；`this`/`future` 需传 `--occurrence-start`，整组使用 `--scope all` 且不传发生时间。整组操作使用原系列 ID，不能用 detached 实例替代。
+- 重复事件的每次发生都在结果中。先刷新相应时间区间，用返回的 `id` 与 `occurrenceStart` 一起定位。编辑/删除默认 `--scope this`；`this`/`future` 需传 `--occurrence-start`，整组使用 `--scope all` 且不传发生时间。整组操作使用原系列 ID，不能用 detached 实例替代。用 `--scope future` 拆开的系列已经是两个独立系列：之后分别用各自的 ID 编辑，不要再对原系列用 `--scope all` 修改日期，EventKit 会连带移动后一段并可能丢失一次。
 - 使用 `events get --id ID` 或带发生时间读取详情，再部分更新所需字段；可用读取的 `revision` 配合 `--expected-revision` 防止过期覆盖。只修改时间时保留备注、地点、重复规则和提醒。
+- 失败时返回的 `error.hint` 给出下一步（例如缺权限、需要 `--force`、需要刷新 `occurrenceStart`）；选项可写成 `--key value` 或 `--key=value`；只写 `applectl events` 这类命令组会返回该组用法。环境变量 `APPLECTL_TIMEOUT_SECONDS`（1–3600）可调整单条命令的等待时间，超时后先回读目标再决定是否重试。
 - `--dry-run` 用于用户要求预览、复杂修改或删除对象的核对；普通明确的新建任务无需强制增加一轮方案确认。修改之后回读核对实际状态。
 
 ## 提醒事项
